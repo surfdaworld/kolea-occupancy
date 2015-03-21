@@ -1,0 +1,214 @@
+#Include AHKCSV.ahk
+
+checkouts := "checkouts.csv"
+checkins := "checkins.txt"
+occupied := "occupied.csv"
+shutoffs := "shutoffs.txt"
+inputcsv := "input.csv"
+
+FileDelete, %checkouts%
+FileDelete, %checkins%
+FileDelete, %occupied%
+FileDelete, %shutoffs%
+FileDelete, %inputcsv%
+
+GetCSV()
+GetInOutOcc()
+GetShutoffs()
+TestExist()
+Cleanup()
+
+ExitApp
+
+;=================================================================
+;Get filename of input xls file, and convert it to CSV
+;=================================================================
+GetCSV()
+{
+	global inputcsv
+		FileSelectFile, inputxls, 3
+	if inputxls =
+	{
+		ExitApp
+	}
+		inputcsvtemp = %A_ScriptDir%\%inputcsv%
+	oExcel := ComObjCreate("Excel.Application")
+	oBook := oExcel.Workbooks.Open(inputxls)
+	oBook.SaveAs(inputcsvtemp, 6)
+	oBook.Close(False)
+	oExel.Quit
+}
+
+;=================================================================
+;Parse inputcsv for checkins, checkouts, and occupied units, and
+;dump unit list to checkins/checkouts/occupied txt files
+;=================================================================
+GetInOutOcc()
+{
+	global checkouts
+	global checkins
+	global occupied
+	global inputcsv
+	
+	CSV_Load(inputcsv,1)
+    FileLength := CSV_TotalRows(1)
+	
+	Loop, %FileLength%
+		{
+			CheckoutDay := CSV_ReadCell(1, A_Index, 4)
+            Unit := CSV_ReadCell(1, A_Index, 1)
+			CheckinDay := CSV_ReadCell(1, A_Index, 2)
+			
+            FormatTime, DateToday,, M/d/yyyy
+			
+			DateTodaytemp := convert(DateToday)
+			CheckinDaytemp :=convert(CheckinDay)
+			CheckoutDaytemp := convert(CheckoutDay)
+			
+            EnvSub, CheckoutDaytemp, DateTodaytemp, days
+			EnvSub, CheckinDaytemp, DateTodaytemp, days
+			
+			If CheckoutDaytemp = -1
+			{
+              FileAppend, %Unit%`n, %checkouts%
+			}
+			
+			If CheckinDaytemp = 1
+			{
+              FileAppend, %Unit%`n, %checkins%
+			}
+            
+            If (CheckinDaytemp < 1 AND CheckoutDaytemp > -1)
+            {
+              FileAppend, %Unit%`n, %occupied%
+            }
+		}
+}
+
+;=================================================================
+;Parse checkout list with occupancy and checkin list, to generate final list
+;of codes to shut off
+;=================================================================
+GetShutoffs()
+{
+	global checkouts
+	global checkins
+	global occupied
+	global shutoffs
+	CSV_Load(checkouts,2)
+	checkoutsLength := CSV_TotalRows(2)
+	
+	Loop, %checkoutsLength%
+	{
+		UnitCheckout := CSV_ReadCell(2, A_Index, 1)
+		OccupiedFlag := 0
+		
+		OccupiedFlag += UnitSearch(occupied, 3, UnitCheckout)
+		OccupiedFlag += UnitSearch(checkins, 4, UnitCheckout)
+
+		if OccupiedFlag = 0
+		{
+			FileAppend, %UnitCheckout%`n, %shutoffs%
+		}
+	}
+}
+
+;=================================================================
+;Search FileName.csv for a specific unit number
+;=================================================================
+UnitSearch(FileName, FileNumber, UnitNumber)
+{
+	CSV_Load(FileName,FileNumber)
+	FileLength := CSV_TotalRows(FileNumber)
+	UnitFound := 0
+	Loop, %FileLength%
+	{
+		UnitOccupied := CSV_ReadCell(FileNumber, A_Index, 1)
+		if UnitNumber = %UnitOccupied%
+		{
+			UnitFound := 1
+		}
+	}
+	return, UnitFound
+}
+
+;=================================================================
+;Convert m/d/yyyy to AHK timestamp format -TJ
+;=================================================================
+Convert(str) {
+	StringSplit, Dates, str, "/"
+	Month := Pad(Dates1)
+	Day := Pad(Dates2)
+	Year := Dates3
+	NewDate = %Year%%Month%%Day%
+	Return, NewDate
+}
+
+;=================================================================
+;Add a leading '0' if str is only 1 digit long. Used to pad
+;months and days for timestamp conversion
+;=================================================================
+Pad(str1) {
+	StringLen, strLength, str1
+	if strLength = 1
+	{
+		str2 = 0%str1%
+	}
+	else
+	{
+		str2 = %str1%
+	}
+	Return, str2
+}
+
+;=================================================================
+;Notify the user if output is missing
+;=================================================================
+TestExist() {
+	
+	global checkouts
+	global checkins
+	global occupied
+	global shutoffs
+	global inputcsv
+	
+	IfExist, %checkins%
+	{
+		Run, Notepad.exe "%checkins%"
+	}
+	else
+	{
+		MsgBox No checkins today!
+	}
+
+	IfExist, %shutoffs%
+	{
+		Run, Notepad.exe "%shutoffs%"
+	}
+	else
+	{
+		MsgBox No codes to shut off today!
+	}
+}
+
+;=================================================================
+;Ask user whether to delete temp files
+;=================================================================
+Cleanup() {
+	
+	global checkouts
+	global checkins
+	global occupied
+	global shutoffs
+	global inputcsv
+	
+	MsgBox, 36, Cleanup?, Delete temporary files?
+	IfMsgBox Yes
+	{
+		FileDelete, %checkouts%
+		FileDelete, %checkins%
+		FileDelete, %occupied%
+		FileDelete, %shutoffs%
+		FileDelete, %inputcsv%
+	}
+}
