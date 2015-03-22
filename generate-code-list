@@ -1,36 +1,9 @@
-; Parse through inputcsv and generate monthly total occupancy report for each unit.
-; Create 143 x ?31? array for units, and populate with occupied dates for each villa.
-; This will automatically avoid double-billing for same day turnarounds
-; Pseudo-code:
-;=======================================================
-; -Get user-specified DateRange
-; -Get user-specified InputCsv
-; -Calculate DaysInRange
-; -Create empty array of 143 x DaysInRange
-; -Create date reference array containing all dates in range
-; Loop, 143 (CurrentUnit)
-;   Loop, DaysInRange (CurrentDay)
-;     Read InputCSV
-;     If=CurrentUnit
-;       If DateToday > CheckIn AND < CheckOut
-;         If Reservation <> OWNER
-;           Write Array: CurrentUnit:CurrentDay := '1'
-;   }
-; }
-; Loop, 143 (CurrentUnit)
-;   Loop, DaysInMonth (CurrentDay)
-;     CurrentUnitOccupancy += CurrentUnit:CurrentDay
-;   }
-;   Write OutputCsv: CurrentUnit, CurrentUnitOccupancy
-; }
-;=======================================================
-; 	1	|	2	|	  3		|	 4	  |	   5	|	 6	  |  7	 |  8	| 9	 |  10	|	  11	 |    12
-; Unit	|Arrival|ArrivalTime|Departure|LastName	|FirstName|Others|Action|Res#|Owner?|LateCheckout|LastUpdated
-;=======================================================
-
 #Include AHKCSV.ahk
 
-global OccTotals     := "occupancy.txt"
+global checkouts     := "checkouts.csv"
+global checkins      := "checkins.txt"
+global occupied      := "occupied.csv"
+global shutoffs      := "shutoffs.txt"
 global inputcsv      := "input.csv"
 global BillingTotals := "billing.csv"
 global DateStart     :=
@@ -46,8 +19,26 @@ global Occupied      := 2 ; store occupied variable for use as Occupancy[] array
 FileDelete, %OccTotals%
 FileDelete, %inputcsv%
 FileDelete, %BillingTotals%
+FileDelete, %checkouts%
+FileDelete, %checkins%
+FileDelete, %occupied%
+FileDelete, %shutoffs%
 
-GetCSV()  ;Finished - commented out until debugging complete
+goto, MakeChoice
+
+3ButtonGenerateCodeList:
+Gui, 3:show, hide
+GetCSV()
+GetInOutOcc()
+GetShutoffs()
+TestExist()
+Cleanup()
+
+ExitApp
+
+3ButtonMonthlyBillingReport:
+Gui, 3:show, hide
+GetCSV()
 Gosub GetDateRange
 CreateArrays()
 ProcessOccupancy()
@@ -61,18 +52,31 @@ ExitApp
 ;Set up GUI elements
 ;=================================================================
 GetDateRange:
-	Gui, Add, MonthCal,multi x2 y0 w230 h170 vDateRange, 
-	Gui, Add, Button, x7 y170 w110 h30 , &Submit
-	Gui, Add, Button, x127 y170 w100 h30 , &Cancel
-	Gui, Show, w237 h206, Choose Dates
+	Gui, 2:Add, MonthCal,multi x2 y0 w230 h170 vDateRange, 
+	Gui, 2:Add, Button, x7 y170 w110 h30 , &Submit
+	Gui, 2:Add, Button, x127 y170 w100 h30 , &Cancel
+	Gui, 2:Show, w237 h206, Choose Dates
 	WinWaitClose, Choose Dates
-ButtonSubmit:
-	Gui, Submit
+2ButtonSubmit:
+	Gui, 2:Submit
 return
 
-GuiClose:
-ButtonCancel:
+2GuiClose:
+2ButtonCancel:
 	ExitApp
+	
+MakeChoice:
+Gui, 3:Add, Button, x12 y10 w120 h30 , Generate Code List
+Gui, 3:Add, Button, x142 y10 w130 h30 , Monthly Billing Report
+; Generated using SmartGUI Creator for SciTE
+Gui, 3:Show, w286 h55, Code list or report
+WinWaitClose, Code list or report
+return
+
+3GuiClose:
+ExitApp
+
+
 	
 ;=================================================================
 ;Get filename of input xls file, and convert it to CSV
