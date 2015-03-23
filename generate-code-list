@@ -15,6 +15,7 @@ global UnitArray     := []
 global Occupancy     := [] ; master occupancy array, UnitNumber:Date(occupied)
 global Billable      := 1 ; store billable variable for use as Occupancy[] array dimension
 global Occupied      := 2 ; store occupied variable for use as Occupancy[] array dimension
+global CleanupPrompt := ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
 
 FileDelete, %OccTotals%
 FileDelete, %inputcsv%
@@ -32,7 +33,7 @@ GetCSV()
 GetInOutOcc()
 GetShutoffs()
 TestExist()
-Cleanup()
+Cleanup(CleanupPrompt)
 
 ExitApp
 
@@ -44,7 +45,7 @@ CreateArrays()
 ProcessOccupancy()
 GetTotals()
 Notify()
-Cleanup()
+Cleanup(CleanupPrompt)
 
 ExitApp
 
@@ -68,9 +69,10 @@ return
 MakeChoice:
 Gui, 3:Add, Button, x12 y10 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x142 y10 w130 h30 , Monthly Billing Report
+Gui, 3:Add, CheckBox, x72 y50 w130 h30 vCleanupPrompt, Keep temporary files
 ; Generated using SmartGUI Creator for SciTE
-Gui, 3:Show, w286 h55, Code list or report
-WinWaitClose, Code list or report
+Gui, 3:Show, w280 h94, Kolea HOA Access Control
+WinWaitClose, Kolea HOA Access Control
 return
 
 3GuiClose:
@@ -104,7 +106,6 @@ GetInOutOcc()
 {
 	CSV_Load(inputcsv,1)
     FileLength := CSV_TotalRows(1)
-	
 	Loop, %FileLength%
 		{
 			CheckoutDay := CSV_ReadCell(1, A_Index, 4)
@@ -112,14 +113,11 @@ GetInOutOcc()
 			CheckinDay := CSV_ReadCell(1, A_Index, 2)
 			
             FormatTime, DateToday,, M/d/yyyy
-			
 			DateTodaytemp := convert(DateToday)
 			CheckinDaytemp :=convert(CheckinDay)
 			CheckoutDaytemp := convert(CheckoutDay)
-			
             EnvSub, CheckoutDaytemp, DateTodaytemp, days
 			EnvSub, CheckinDaytemp, DateTodaytemp, days
-			
 			If CheckoutDaytemp = -1
 			{
               FileAppend, %Unit%`n, %checkouts%
@@ -236,17 +234,16 @@ TestExist() {
 ;=================================================================
 ;Ask user whether to delete temp files
 ;=================================================================
-Cleanup() {
-	
-	;MsgBox, 36, Cleanup?, Delete temporary files?
-	;IfMsgBox Yes
-	;{
+Cleanup(CleanupPrompt)
+{
+	If CleanupPrompt = 0
+	{
 		FileDelete, %checkouts%
 		FileDelete, %checkins%
 		FileDelete, %occupied%
 		FileDelete, %shutoffs%
 		FileDelete, %inputcsv%
-	;}
+	}
 }
 
 ;=================================================================
