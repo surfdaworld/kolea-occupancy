@@ -2,7 +2,7 @@
 
 global checkouts     := "checkouts.csv"
 global checkins      := "checkins.txt"
-global occupied      := "occupied.csv"
+global occupiedlist  := "occupied.csv"
 global shutoffs      := "shutoffs.txt"
 global inputcsv      := "input.csv"
 global BillingTotals := "billing.csv"
@@ -22,7 +22,7 @@ FileDelete, %inputcsv%
 FileDelete, %BillingTotals%
 FileDelete, %checkouts%
 FileDelete, %checkins%
-FileDelete, %occupied%
+FileDelete, %occupiedlist%
 FileDelete, %shutoffs%
 
 goto, MakeChoice
@@ -130,7 +130,7 @@ GetInOutOcc()
             
             If (CheckinDaytemp < 1 AND CheckoutDaytemp > -1)
             {
-              FileAppend, %Unit%`n, %occupied%
+              FileAppend, %Unit%`n, %occupiedlist%
             }
 		}
 }
@@ -236,12 +236,12 @@ TestExist() {
 ;=================================================================
 Cleanup(CleanupPrompt)
 {
-	If CleanupPrompt = 0
+	If CleanupPrompt != 1
 	{
 		FileDelete, %checkouts%
-		FileDelete, %checkins%
-		FileDelete, %occupied%
-		FileDelete, %shutoffs%
+		;FileDelete, %checkins%
+		FileDelete, %occupiedlist%
+		;FileDelete, %shutoffs%
 		FileDelete, %inputcsv%
 	}
 }
