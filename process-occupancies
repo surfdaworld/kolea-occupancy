@@ -13,9 +13,15 @@ global DateArray     := []
 global DateRange     :=
 global UnitArray     := []
 global Occupancy     := [] ; master occupancy array, UnitNumber:Date(occupied)
-global Billable      := 1 ; store billable variable for use as Occupancy[] array dimension
-global Occupied      := 2 ; store occupied variable for use as Occupancy[] array dimension
-global CleanupPrompt := ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
+global Billable      := 1  ; store billable variable for use as Occupancy[] array dimension
+global Occupied      := 2  ; store occupied variable for use as Occupancy[] array dimension
+global CleanupPrompt :=    ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
+
+global ColNumParty   := 8  ; column number of number of people in party
+global ColArrDate    := 2  ; column number of arrival date
+global ColDepDate    := 4  ; column number of departure date
+global ColOwnRes     := 11 ; column number of Owner Res.
+global ColUnit       := 1  ; column number of Unit
 
 FileDelete, %OccTotals%
 FileDelete, %inputcsv%
@@ -77,8 +83,6 @@ return
 
 3GuiClose:
 ExitApp
-
-
 	
 ;=================================================================
 ;Get filename of input xls file, and convert it to CSV
@@ -90,7 +94,7 @@ GetCSV()
 	{
 		ExitApp
 	}
-		inputcsvtemp = %A_ScriptDir%\%inputcsv%
+	inputcsvtemp = %A_ScriptDir%\%inputcsv%
 	oExcel := ComObjCreate("Excel.Application")
 	oBook := oExcel.Workbooks.Open(inputxls)
 	oBook.SaveAs(inputcsvtemp, 6)
@@ -108,9 +112,9 @@ GetInOutOcc()
     FileLength := CSV_TotalRows(1)
 	Loop, %FileLength%
 		{
-			CheckoutDay := CSV_ReadCell(1, A_Index, 4)
-            Unit := CSV_ReadCell(1, A_Index, 1)
-			CheckinDay := CSV_ReadCell(1, A_Index, 2)
+			CheckoutDay := CSV_ReadCell(1, A_Index, ColDepDate)
+            Unit := CSV_ReadCell(1, A_Index, ColUnit)
+			CheckinDay := CSV_ReadCell(1, A_Index, ColArrDate)
 			
             FormatTime, DateToday,, M/d/yyyy
 			DateTodaytemp := convert(DateToday)
@@ -146,7 +150,7 @@ GetShutoffs()
 	
 	Loop, %checkoutsLength%
 	{
-		UnitCheckout := CSV_ReadCell(2, A_Index, 1)
+		UnitCheckout := CSV_ReadCell(2, A_Index, ColUnit)
 		OccupiedFlag := 0
 		
 		OccupiedFlag += UnitSearch(occupied, 3, UnitCheckout)
@@ -169,7 +173,7 @@ UnitSearch(FileName, FileNumber, UnitNumber)
 	UnitFound := 0
 	Loop, %FileLength%
 	{
-		UnitOccupied := CSV_ReadCell(FileNumber, A_Index, 1)
+		UnitOccupied := CSV_ReadCell(FileNumber, A_Index, ColUnit)
 		if UnitNumber = %UnitOccupied%
 		{
 			UnitFound := 1
@@ -288,10 +292,10 @@ ProcessOccupancy()
 		CurrentUnit := UnitArray[A_Index]
 		loop, %FileLength%
 		{
-			FileUnit := CSV_ReadCell(1, A_Index, 1)
-			CheckoutDay := CSV_ReadCell(1, A_Index, 4)
-			CheckinDay := CSV_ReadCell(1, A_Index, 2)
-			IsOwner := CSV_ReadCell(1, A_Index, 10)
+			FileUnit := CSV_ReadCell(1, A_Index, ColUnit)
+			CheckoutDay := CSV_ReadCell(1, A_Index, ColDepDate)
+			CheckinDay := CSV_ReadCell(1, A_Index, ColArrDate)
+			IsOwner := CSV_ReadCell(1, A_Index, ColOwnRes)
 			StringLen, IsOwner, IsOwner
 			
 			CheckinDay := convert(CheckinDay)
