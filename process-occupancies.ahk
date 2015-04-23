@@ -34,6 +34,7 @@ FileDelete, %shutoffs%
 goto, MakeChoice
 
 3ButtonGenerateCodeList:
+Gui, 3:Submit
 Gui, 3:show, hide
 GetCSV()
 GetInOutOcc()
@@ -44,6 +45,7 @@ Cleanup(CleanupPrompt)
 ExitApp
 
 3ButtonMonthlyBillingReport:
+Gui, 3:Submit
 Gui, 3:show, hide
 GetCSV()
 Gosub GetDateRange
