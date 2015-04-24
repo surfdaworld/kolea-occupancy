@@ -34,6 +34,9 @@ FileDelete, %shutoffs%
 
 goto, MakeChoice
 
+;=================================================================
+;Generate Daily Code/Card Programming List
+;=================================================================
 3ButtonGenerateCodeList:
 Gui, 3:Submit
 Gui, 3:show, hide
@@ -42,9 +45,11 @@ GetInOutOcc()
 GetShutoffs()
 TestExist()
 Cleanup(CleanupPrompt)
-
 ExitApp
 
+;=================================================================
+;Generate monthly billing report
+;=================================================================
 3ButtonMonthlyBillingReport:
 Gui, 3:Submit
 Gui, 3:show, hide
@@ -55,11 +60,10 @@ ProcessOccupancy()
 GetTotals()
 Notify()
 Cleanup(CleanupPrompt)
-
 ExitApp
 
 ;=================================================================
-;Set up GUI elements
+;Prompt for billing report date range
 ;=================================================================
 GetDateRange:
 	Gui, 2:Add, MonthCal,multi x2 y0 w230 h170 vDateRange, 
@@ -74,7 +78,10 @@ return
 2GuiClose:
 2ButtonCancel:
 	ExitApp
-	
+
+;=================================================================
+;Initial GUI displayed - prompt user for billing report/code list
+;=================================================================
 MakeChoice:
 Gui, 3:Add, Button, x12 y10 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x142 y10 w130 h30 , Monthly Billing Report
@@ -88,7 +95,7 @@ return
 ExitApp
 	
 ;=================================================================
-;Get filename of input xls file, and convert it to CSV
+;Prompt for input xls file, and convert it to CSV
 ;=================================================================
 GetCSV()
 {
@@ -143,8 +150,8 @@ GetInOutOcc()
 }
 
 ;=================================================================
-;Parse checkout list with occupancy and checkin list, to generate final list
-;of codes to shut off
+;Parse checkout list with occupancy and checkin list, to generate
+;code list to shut off
 ;=================================================================
 GetShutoffs()
 {
@@ -167,7 +174,7 @@ GetShutoffs()
 }
 
 ;=================================================================
-;Search FileName.csv for a specific unit number
+;Search FileName.csv for a specific unit number, return 1 if found
 ;=================================================================
 UnitSearch(FileName, FileNumber, UnitNumber)
 {
@@ -186,7 +193,7 @@ UnitSearch(FileName, FileNumber, UnitNumber)
 }
 
 ;=================================================================
-;Convert m/d/yyyy to AHK timestamp format -TJ
+;Convert m/d/yyyy to AHK timestamp format
 ;=================================================================
 Convert(str) {
 	StringSplit, Dates, str, "/"
@@ -215,7 +222,7 @@ Pad(str1) {
 }
 
 ;=================================================================
-;Notify the user if output is missing
+;Notify the user if no checkins or checkouts
 ;=================================================================
 TestExist() {
 	
@@ -239,22 +246,22 @@ TestExist() {
 }
 
 ;=================================================================
-;Ask user whether to delete temp files
+;Delete checkouts, occupiedlist, and inputcsv if user has not
+;chosen to keep temp files
 ;=================================================================
 Cleanup(CleanupPrompt)
 {
 	If CleanupPrompt != 1
 	{
 		FileDelete, %checkouts%
-		;FileDelete, %checkins%
 		FileDelete, %occupiedlist%
-		;FileDelete, %shutoffs%
 		FileDelete, %inputcsv%
 	}
 }
 
 ;=================================================================
-;Create reference arrays for processing
+;Create reference array of all dates in chosen range, and unit
+;number master reference array.
 ;=================================================================
 CreateArrays()
 {
@@ -283,7 +290,8 @@ CreateArrays()
 }
 
 ;=================================================================
-;Parse through inputcsv and populate Occupancy[]
+;Parse through inputcsv and populate Occupancy[] array with all
+;occupied units & dates
 ;=================================================================
 ProcessOccupancy()
 {
@@ -334,7 +342,8 @@ ProcessOccupancy()
 }
 
 ;=================================================================
-;Get SUM of billable and non-billable occupied nights per unit
+;Get sum of billable and non-billable (owner-occuped)
+;nights per unit
 ;=================================================================
 GetTotals()
 {
