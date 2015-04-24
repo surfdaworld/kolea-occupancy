@@ -12,10 +12,11 @@ global DaysInRange   :=
 global DateArray     := []
 global DateRange     :=
 global UnitArray     := []
-global Occupancy     := [] ; master occupancy array, UnitNumber:Date(occupied)
-global Billable      := 1  ; store billable variable for use as Occupancy[] array dimension
-global Occupied      := 2  ; store occupied variable for use as Occupancy[] array dimension
-global CleanupPrompt :=    ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
+global Occupancy     := []   ; master occupancy array, UnitNumber:Date(occupied)
+global Billable      := 1    ; store billable variable for use as Occupancy[] array dimension
+global Occupied      := 2    ; store occupied variable for use as Occupancy[] array dimension
+global CleanupPrompt :=      ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
+global VersionNum    := 1.35 ; Set version number for display
 
 global ColNumParty   := 8  ; column number of number of people in party
 global ColArrDate    := 2  ; column number of arrival date
@@ -78,7 +79,7 @@ MakeChoice:
 Gui, 3:Add, Button, x12 y10 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x142 y10 w130 h30 , Monthly Billing Report
 Gui, 3:Add, CheckBox, x72 y50 w130 h30 vCleanupPrompt, Keep temporary files
-; Generated using SmartGUI Creator for SciTE
+Gui, 3:Add, Text, x240 y75 w30 h20 , v.%VersionNum%
 Gui, 3:Show, w280 h94, Kolea HOA Access Control
 WinWaitClose, Kolea HOA Access Control
 return
