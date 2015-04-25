@@ -18,8 +18,6 @@ global Occupied        := 2              ; store occupied variable for use as Oc
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
 global VersionNum      := "1.4b"         ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
-global CurrentFile     :=                ; variable to notify Gui4 user which file is being displayed
-global DisplayFileName :=                ; Guicontrol variable for text field to display filename
 global TextWindow      :=                ; Guicontrol variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
 
@@ -231,35 +229,41 @@ Pad(str1) {
 ;=================================================================
 DisplayData() {
 	
+	FileRead, FileContents, %checkins%
+	CurrentFile = Checkins
+	WindowTitle = Checkins
 	Gui, 4:font, , Courier New
-	Gui, 4:add, text, x280 y5 w200 h25 vDisplayFilename, %CurrentFile%
-	Gui, 4:add, edit, +readonly vscroll x5 y35 w590 h370 vTextWindow, %FileContents%
-	Gui, 4:Add, Button, x7 y410 w110 h30 , &Checkins
-	Gui, 4:Add, Button, x150 y410 w110 h30 , &Checkouts
-	Gui, 4:Add, Button, x293 y410 w110 h30 , &Occupied
-	Gui, 4:show,w600 h445,%WindowTitle%
-	WinWaitClose, %WindowTitle%
+	Gui, 4:add, edit, +readonly vscroll x5 y5 w590 h370 vTextWindow, %FileContents%
+	Gui, 4:Add, Button, x100 y380 w110 h30 , &Checkins
+	Gui, 4:Add, Button, x250 y380 w110 h30 , &Shutoffs
+	Gui, 4:Add, Button, x400 y380 w110 h30 , &Occupied
+	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:+LastFound
+	WinWaitClose
 	return
 	
 	4ButtonCheckins:
 	FileRead, FileContents, %checkins%
 	CurrentFile = Checkins
 	GuiControl,, TextWindow, %FileContents%
-	GuiControl,, DisplayFilename, %CurrentFile%
+	WindowTitle = Checkins
+	Gui, 4:show,w600 h415,%WindowTitle%
 	return
 	
-	4ButtonCheckouts:
-	FileRead, FileContents, %checkouts%
+	4ButtonShutoffs:
+	FileRead, FileContents, %shutoffs%
 	CurrentFile = Checkouts
 	GuiControl,, TextWindow, %FileContents%
-	GuiControl,, DisplayFilename, %CurrentFile%
+	WindowTitle = Shutoffs
+	Gui, 4:show,w600 h415,%WindowTitle%
 	return
 	
 	4ButtonOccupied:
 	FileRead, FileContents, %occupiedlist%
 	CurrentFile = Occupied Units
 	GuiControl,, TextWindow, %FileContents%
-	GuiControl,, DisplayFilename, %CurrentFile%
+	WindowTitle = Occupied Units
+	Gui, 4:show,w600 h415,%WindowTitle%
 	return
 	
 	4GuiClose:
@@ -276,6 +280,8 @@ Cleanup(CleanupPrompt)
 	If CleanupPrompt != 1
 	{
 		FileDelete, %checkouts%
+		FileDelete, %shutoffs%
+		FileDelete, %checkins%
 		FileDelete, %occupiedlist%
 		FileDelete, %inputcsv%
 	}
