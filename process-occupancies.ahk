@@ -16,7 +16,9 @@ global Occupancy     := []   ; master occupancy array, UnitNumber:Date(occupied)
 global Billable      := 1    ; store billable variable for use as Occupancy[] array dimension
 global Occupied      := 2    ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt :=      ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
-global VersionNum    := 1.35 ; Set version number for display
+global VersionNum    := 1.4  ; Set version number for display
+global FileContents  :=      ; variable for displaying occupancy data in Gui4
+global CurrentFile   :=      ; variable to notify Gui4 user which file is being displayed
 
 global ColNumParty   := 8  ; column number of number of people in party
 global ColArrDate    := 2  ; column number of arrival date
@@ -43,7 +45,8 @@ Gui, 3:show, hide
 GetCSV()
 GetInOutOcc()
 GetShutoffs()
-TestExist()
+;DisplayData()
+goto, DisplayData2
 Cleanup(CleanupPrompt)
 ExitApp
 
@@ -224,25 +227,27 @@ Pad(str1) {
 ;=================================================================
 ;Notify the user if no checkins or checkouts
 ;=================================================================
-TestExist() {
+DisplayData() {
 	
-	IfExist, %checkins%
-	{
-		Run, Notepad.exe "%checkins%"
-	}
-	else
-	{
-		MsgBox No checkins today!
-	}
+;	IfExist, %checkins%
+;	{
+;		Run, Notepad.exe "%checkins%"
+;	}
+;	else
+;	{
+;		MsgBox No checkins today!
+;	}
+;
+;	IfExist, %shutoffs%
+;	{
+;		Run, Notepad.exe "%shutoffs%"
+;	}
+;	else
+;	{
+;		MsgBox No codes to shut off today!
+;	}
 
-	IfExist, %shutoffs%
-	{
-		Run, Notepad.exe "%shutoffs%"
-	}
-	else
-	{
-		MsgBox No codes to shut off today!
-	}
+
 }
 
 ;=================================================================
@@ -389,3 +394,35 @@ Notify()
 	SetTitleMatchMode, 2
 	WinActivate, Excel
 }
+
+DisplayData2:
+ShowDataWindow:
+Gui, 4:font, , Courier New
+Gui, 4:add, text, x280 y5 w200 h25, %CurrentFile%
+Gui, 4:add, edit, +readonly vscroll x5 y35 w590 h370, %FileContents%
+Gui, 4:Add, Button, x7 y410 w110 h30 , &Checkins
+Gui, 4:Add, Button, x150 y410 w110 h30 , &Checkouts
+Gui, 4:Add, Button, x293 y410 w110 h30 , &Occupied
+Gui, 4:show,w600 h445,Occupancy Data
+WinWaitClose, Occupancy Data
+4GuiClose:
+Cleanup(CleanupPrompt)
+ExitApp
+
+4ButtonCheckins:
+FileRead, FileContents, %checkins%
+CurrentFile = Checkins
+Gui, 4:destroy
+goto, ShowDataWindow
+
+4ButtonCheckouts:
+FileRead, FileContents, %checkouts%
+CurrentFile = Checkouts
+Gui, 4:destroy
+goto, ShowDataWindow
+
+4ButtonOccupied:
+FileRead, FileContents, %occupiedlist%
+CurrentFile = Occupied Units
+Gui, 4:destroy
+goto, ShowDataWindow
