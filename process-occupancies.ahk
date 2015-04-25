@@ -1,22 +1,25 @@
 #Include AHKCSV.ahk
 
-global checkouts     := "checkouts.csv"
-global checkins      := "checkins.txt"
-global occupiedlist  := "occupied.csv"
-global shutoffs      := "shutoffs.txt"
-global inputcsv      := "input.csv"
-global BillingTotals := "billing.csv"
-global DateStart     :=
-global DateEnd       :=
-global DaysInRange   :=
-global DateArray     := []
-global DateRange     :=
-global UnitArray     := []
-global Occupancy     := []   ; master occupancy array, UnitNumber:Date(occupied)
-global Billable      := 1    ; store billable variable for use as Occupancy[] array dimension
-global Occupied      := 2    ; store occupied variable for use as Occupancy[] array dimension
-global CleanupPrompt :=      ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
-global VersionNum    := 1.35 ; Set version number for display
+global checkouts       := "checkouts.csv"
+global checkins        := "checkins.txt"
+global occupiedlist    := "occupied.csv"
+global shutoffs        := "shutoffs.txt"
+global inputcsv        := "input.csv"
+global BillingTotals   := "billing.csv"
+global DateStart       :=
+global DateEnd         :=
+global DaysInRange     :=
+global DateArray       := []
+global DateRange       :=
+global UnitArray       := []
+global Occupancy       := []             ; master occupancy array, UnitNumber:Date(occupied)
+global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
+global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
+global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
+global VersionNum      := "1.4b"         ; Set version number for display
+global FileContents    :=                ; variable for displaying occupancy data in Gui4
+global TextWindow      :=                ; Guicontrol variable for edit field to display file contents
+global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
 
 global ColNumParty   := 8  ; column number of number of people in party
 global ColArrDate    := 2  ; column number of arrival date
@@ -43,7 +46,7 @@ Gui, 3:show, hide
 GetCSV()
 GetInOutOcc()
 GetShutoffs()
-TestExist()
+DisplayData()
 Cleanup(CleanupPrompt)
 ExitApp
 
@@ -224,25 +227,48 @@ Pad(str1) {
 ;=================================================================
 ;Notify the user if no checkins or checkouts
 ;=================================================================
-TestExist() {
+DisplayData() {
 	
-	IfExist, %checkins%
-	{
-		Run, Notepad.exe "%checkins%"
-	}
-	else
-	{
-		MsgBox No checkins today!
-	}
-
-	IfExist, %shutoffs%
-	{
-		Run, Notepad.exe "%shutoffs%"
-	}
-	else
-	{
-		MsgBox No codes to shut off today!
-	}
+	FileRead, FileContents, %checkins%
+	CurrentFile = Checkins
+	WindowTitle = Checkins
+	Gui, 4:font, , Courier New
+	Gui, 4:add, edit, +readonly vscroll x5 y5 w590 h370 vTextWindow, %FileContents%
+	Gui, 4:Add, Button, x100 y380 w110 h30 , &Checkins
+	Gui, 4:Add, Button, x250 y380 w110 h30 , &Shutoffs
+	Gui, 4:Add, Button, x400 y380 w110 h30 , &Occupied
+	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:+LastFound
+	WinWaitClose
+	return
+	
+	4ButtonCheckins:
+	FileRead, FileContents, %checkins%
+	CurrentFile = Checkins
+	GuiControl,, TextWindow, %FileContents%
+	WindowTitle = Checkins
+	Gui, 4:show,w600 h415,%WindowTitle%
+	return
+	
+	4ButtonShutoffs:
+	FileRead, FileContents, %shutoffs%
+	CurrentFile = Checkouts
+	GuiControl,, TextWindow, %FileContents%
+	WindowTitle = Shutoffs
+	Gui, 4:show,w600 h415,%WindowTitle%
+	return
+	
+	4ButtonOccupied:
+	FileRead, FileContents, %occupiedlist%
+	CurrentFile = Occupied Units
+	GuiControl,, TextWindow, %FileContents%
+	WindowTitle = Occupied Units
+	Gui, 4:show,w600 h415,%WindowTitle%
+	return
+	
+	4GuiClose:
+	Gui, 4:Destroy
+	return
 }
 
 ;=================================================================
@@ -254,6 +280,8 @@ Cleanup(CleanupPrompt)
 	If CleanupPrompt != 1
 	{
 		FileDelete, %checkouts%
+		FileDelete, %shutoffs%
+		FileDelete, %checkins%
 		FileDelete, %occupiedlist%
 		FileDelete, %inputcsv%
 	}
