@@ -15,10 +15,10 @@ global UnitArray       := []
 global Occupancy       := []             ; master occupancy array, UnitNumber:Date(occupied)
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
-global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in GUI checkbox)
-global VersionNum      := "1.4b"         ; Set version number for display
+global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
+global VersionNum      := "1.5"         ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
-global TextWindow      :=                ; Guicontrol variable for edit field to display file contents
+global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
 
 global ColNumParty   := 8  ; column number of number of people in party
@@ -319,7 +319,7 @@ CreateArrays()
 
 ;=================================================================
 ;Parse through inputcsv and populate Occupancy[] array with all
-;occupied units & dates
+;occupied units & dates, for monthly billing report
 ;=================================================================
 ProcessOccupancy()
 {
@@ -329,37 +329,38 @@ ProcessOccupancy()
 	{
 		UnitIndex := A_Index
 		CurrentUnit := UnitArray[A_Index]
-		loop, %FileLength%
+		loop, %FileLength% ; loop through file line by line
 		{
-			FileUnit := CSV_ReadCell(1, A_Index, ColUnit)
-			CheckoutDay := CSV_ReadCell(1, A_Index, ColDepDate)
-			CheckinDay := CSV_ReadCell(1, A_Index, ColArrDate)
-			IsOwner := CSV_ReadCell(1, A_Index, ColOwnRes)
-			StringLen, IsOwner, IsOwner
+			FileUnit := CSV_ReadCell(1, A_Index, ColUnit) ; store unit number of current line
+			CheckoutDay := CSV_ReadCell(1, A_Index, ColDepDate) ; store checkout date of current line
+			CheckinDay := CSV_ReadCell(1, A_Index, ColArrDate) ; store checkin date of current line
+			IsOwner := CSV_ReadCell(1, A_Index, ColOwnRes) ; is this reservation for an owner?
+			StringLen, IsOwner, IsOwner ; convert IsOwner to the length of itself, for billable testing later
 			
-			CheckinDay := convert(CheckinDay)
-			CheckoutDay := convert(CheckoutDay)
+			CheckinDay := convert(CheckinDay) ; convert CheckinDay to ahk timestamp format
+			CheckoutDay := convert(CheckoutDay) ; convert CheckoutDay to ahk timestamp format
+			CheckoutDay += -1, days ; subtract one day from checkout date (causes report to generate based on number of NIGHTS, rather than DAYS.)
+			; As instructed per Dennis on 4/28/15 -TJ
 			
 			If FileUnit = %CurrentUnit%
 			{
-				loop, %DaysInRange%
+				loop, %DaysInRange% ; loop through all dates in user-selected range
 				{
 					DayIndex := A_Index
 					CheckinDayTemp := CheckinDay
+					CurrentDay := DateArray[A_Index] ; current day in loop (daysinrange)
 					CheckoutDayTemp := CheckoutDay
-					CurrentDay := DateArray[A_Index]
-					StringLeft, CurrentDay, CurrentDay, 8
-					EnvSub, CheckinDayTemp, CurrentDay, days
-					EnvSub, CheckoutDayTemp, CurrentDay, days
-					If CheckoutDayTemp > -1
+					StringLeft, CurrentDay, CurrentDay, 8 ; crop time portion off of CurrentDay timestamp
+					EnvSub, CheckinDayTemp, CurrentDay, days ; measure number of days from CheckinDayTemp to CurrentDay
+					EnvSub, CheckoutDayTemp, CurrentDay, days ; measure number of days from CheckoutDayTemp to CurrentDay
+					If CheckoutDayTemp > -1 ; if Checkout Day is after yesterday(CurrentDay)
 					{
-						If CheckinDayTemp < 1
+						If CheckinDayTemp < 1 ; if Checkin Day is before tomorrow(CurrentDay)
 						{
-							Occupancy[UnitIndex, DayIndex, Occupied] := 1
-							TestOcc := Occupancy[UnitIndex, DayIndex, Occupied]
-							If IsOwner < 5
+							Occupancy[UnitIndex, DayIndex, Occupied] := 1 ; flag unit as occupied on this date in the Occupancy[] array
+							If IsOwner < 5 ; Test length of IsOwner. Will only be < 5 if it is NOT an owner. Length will be = 5 if it is an owner.
 							{
-								Occupancy[UnitIndex, DayIndex, Billable] := 1
+								Occupancy[UnitIndex, DayIndex, Billable] := 1 ; If NOT an owner, flag this day/unit as billable.
 							}
 						}
 					}
