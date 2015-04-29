@@ -16,7 +16,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.5"         ; Set version number for display
+global VersionNum      := "1.6"         ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -27,6 +27,7 @@ global ColDepDate    := 4  ; column number of departure date
 global ColOwnRes     := 11 ; column number of Owner Res.
 global ColUnit       := 1  ; column number of Unit
 
+;Delete any temp files from last run
 FileDelete, %OccTotals%
 FileDelete, %inputcsv%
 FileDelete, %BillingTotals%
@@ -35,7 +36,7 @@ FileDelete, %checkins%
 FileDelete, %occupiedlist%
 FileDelete, %shutoffs%
 
-goto, MakeChoice
+goto, MakeChoice ; Display Gui4 to prompt user for Daily Code List, or Monthly Billing Report
 
 ;=================================================================
 ;Generate Daily Code/Card Programming List
@@ -150,6 +151,32 @@ GetInOutOcc()
               FileAppend, %Unit%`n, %occupiedlist%
             }
 		}
+	CleanOccupancies(occupiedlist)
+}
+
+;=================================================================
+;Clean up OccupiedList file by removing extraneous header lines,
+;and filtering out duplicate unit numbers
+;=================================================================
+CleanOccupancies(occupiedlist)
+{
+	FileDelete, occtemp.txt ; delete temp file from previous run, if it exists
+	CSV_Load(occupiedlist,11)
+    FileLength := CSV_TotalRows(11)
+	Loop, %FileLength%
+	{
+		UnitTemp := CSV_ReadCell(11, A_Index, 1)
+		If (A_Index>3) ; ignore first three (junk) lines of OccupiedList header
+		{
+			DuplicateUnit := UnitSearch("occtemp.txt", 12, UnitTemp) ; check if UnitTemp already exists in occtemp.txt
+			If (DuplicateUnit != 1) ; If UnitTemp is not already in occtemp.txt, then append it to that file
+			{
+				FileAppend, %UnitTemp%`n, occtemp.txt
+			}
+		}
+	}
+	FileDelete, %occupiedlist%
+	FileMove, occtemp.txt, %occupiedlist% ; replace old OccupiedList with occtemp.txt
 }
 
 ;=================================================================
