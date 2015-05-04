@@ -6,6 +6,7 @@ global occupiedlist    := "occupied.csv"
 global shutoffs        := "shutoffs.txt"
 global inputcsv        := "input.csv"
 global BillingTotals   := "billing.csv"
+global inputxls        :=                ; input filename for excel file downloaded
 global DateStart       :=
 global DateEnd         :=
 global DaysInRange     :=
@@ -16,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.6"          ; Set version number for display
+global VersionNum      := "1.61"         ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -299,8 +300,7 @@ DisplayData() {
 }
 
 ;=================================================================
-;Delete checkouts, occupiedlist, and inputcsv if user has not
-;chosen to keep temp files
+;Delete all temp files if user has not chosen to keep temp files
 ;=================================================================
 Cleanup(CleanupPrompt)
 {
@@ -311,6 +311,7 @@ Cleanup(CleanupPrompt)
 		FileDelete, %checkins%
 		FileDelete, %occupiedlist%
 		FileDelete, %inputcsv%
+		FileDelete, %inputxls%
 	}
 }
 
