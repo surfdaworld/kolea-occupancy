@@ -17,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.62"         ; Set version number for display
+global VersionNum      := "1.7"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -173,15 +173,19 @@ CleanOccupancies(occupiedlist)
 		UnitTemp := CSV_ReadCell(11, A_Index, 1)
 		If (A_Index>3) ; ignore first three (junk) lines of OccupiedList header
 		{
-			DuplicateUnit := UnitSearch("occtemp.txt", 12, UnitTemp) ; check if UnitTemp already exists in occtemp.txt
-			If (DuplicateUnit != 1) ; If UnitTemp is not already in occtemp.txt, then append it to that file
-			{
-				FileAppend, %UnitTemp%`n, occtemp.txt
-			}
+		FileAppend, %UnitTemp%`n, occtemp.txt
 		}
 	}
 	FileDelete, %occupiedlist%
 	FileMove, occtemp.txt, %occupiedlist% ; replace old OccupiedList with occtemp.txt
+	FileDelete, occtemp.txt ; delete temp file
+	
+	FileRead, FileContents, %occupiedlist%
+	
+	Sort, FileContents
+    FileDelete, %occupiedlist%
+    FileAppend, %FileContents%, %occupiedlist%
+    FileContents =  ; Free the memory.
 }
 
 ;=================================================================
@@ -449,4 +453,16 @@ Notify()
 	Run, %BillingTotals%
 	SetTitleMatchMode, 2
 	WinActivate, Excel
+}
+
+;=================================================================
+;Attempt to program all cards/codes by directly manipulating
+;the AlarmLock mbd database
+;=================================================================
+ProgramCodes()
+{
+	;Populate card/code starting array (Unit, Cards, Code)
+	;Shut off all cards/codes
+	;Turn on appropriate cards
+	;Turn on appropriate codes
 }
