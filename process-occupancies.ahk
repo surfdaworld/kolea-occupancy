@@ -202,7 +202,7 @@ GetShutoffs()
 		UnitCheckout := CSV_ReadCell(2, A_Index, ColUnit)
 		OccupiedFlag := 0
 		
-		OccupiedFlag += UnitSearch(occupied, 3, UnitCheckout)
+		OccupiedFlag += UnitSearch(occupiedlist, 3, UnitCheckout)
 		OccupiedFlag += UnitSearch(checkins, 4, UnitCheckout)
 
 		if OccupiedFlag = 0
