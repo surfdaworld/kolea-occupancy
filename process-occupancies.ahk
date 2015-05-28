@@ -17,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.75"         ; Set version number for display
+global VersionNum      := "1.8"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -133,6 +133,7 @@ GetInOutOcc()
 			IsOwner := CSV_ReadCell(1, A_Index, ColOwnRes)
 			
             FormatTime, DateToday,, M/d/yyyy
+			;DateToday = 5/27/2015 ; Un-comment this line to force a specific date for debugging and testing.
 			DateTodaytemp := convert(DateToday)
 			CheckinDaytemp :=convert(CheckinDay)
 			CheckoutDaytemp := convert(CheckoutDay)
@@ -153,7 +154,10 @@ GetInOutOcc()
             
             If (CheckinDaytemp < 1 AND CheckoutDaytemp > -1)
             {
-              FileAppend, %Unit%`n, %occupiedlist%
+              FileAppend,
+				(
+				%Unit%, %IsOwner%`n
+				), %occupiedlist%
             }
 		}
 	CleanOccupancies(occupiedlist)
@@ -171,20 +175,27 @@ CleanOccupancies(occupiedlist)
 	Loop, %FileLength%
 	{
 		UnitTemp := CSV_ReadCell(11, A_Index, 1)
-		If (A_Index>3) ; ignore first three (junk) lines of OccupiedList header
+		OwnerTemp := CSV_ReadCell(11, A_Index, 2)
+		If (StrLen(UnitTemp)<3) ; filter out empty lines
 		{
-		FileAppend, %UnitTemp%`n, occtemp.txt
+		}
+		else
+		{ ; Add occupied unit and owner flag to occupied list
+		FileAppend,
+				(
+				%UnitTemp%, %OwnerTemp%`n
+				), occtemp.txt
 		}
 	}
 	FileDelete, %occupiedlist%
 	FileMove, occtemp.txt, %occupiedlist% ; replace old OccupiedList with occtemp.txt
 	FileDelete, occtemp.txt ; delete temp file
 	
-	FileRead, FileContents, %occupiedlist%
+	FileRead, FileContents, %occupiedlist% ; read whole file into variable
 	
-	Sort, FileContents
-    FileDelete, %occupiedlist%
-    FileAppend, %FileContents%, %occupiedlist%
+	Sort, FileContents ; sort list alphabetically, and filter out duplicates
+    FileDelete, %occupiedlist% ; delete the original list
+    FileAppend, %FileContents%, %occupiedlist% ; replace with filtered and de-duplicated list
     FileContents =  ; Free the memory.
 }
 
