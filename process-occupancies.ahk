@@ -17,10 +17,12 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.8"          ; Set version number for display
+global VersionNum      := "1.9"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
+global SetDate         :=                ; overridden date value
+global DateToday       :=                ; Formatted datestamp of generated report
 
 global ColNumParty   := 8  ; column number of number of people in party
 global ColArrDate    := 2  ; column number of arrival date
@@ -37,7 +39,7 @@ FileDelete, %checkins%
 FileDelete, %occupiedlist%
 FileDelete, %shutoffs%
 
-goto, MakeChoice ; Display Gui4 to prompt user for Daily Code List, or Monthly Billing Report
+goto, MakeChoice ; Display Gui3 to prompt user for Daily Code List, or Monthly Billing Report
 
 ;=================================================================
 ;Generate Daily Code/Card Programming List
@@ -88,17 +90,19 @@ return
 ;Initial GUI displayed - prompt user for billing report/code list
 ;=================================================================
 MakeChoice:
-Gui, 3:Add, Button, x12 y10 w120 h30 , Generate Code List
-Gui, 3:Add, Button, x142 y10 w130 h30 , Monthly Billing Report
-Gui, 3:Add, CheckBox, x72 y50 w130 h30 vCleanupPrompt, Keep temporary files
-Gui, 3:Add, Text, x240 y75 w30 h20 , v.%VersionNum%
-Gui, 3:Show, w280 h94, Kolea HOA Access Control
+Gui, 3:Add, Button, x7 y5 w120 h30 , Generate Code List
+Gui, 3:Add, Button, x137 y5 w130 h30 , Monthly Billing Report
+Gui, 3:Add, Checkbox, x142 y40 w120 h20 vCleanupPrompt, Keep temporary files
+Gui, 3:Add, Text, x230 y80 w40 h20 , v.%VersionNum%
+Gui, 3:Add, DateTime, x12 y40 w110 h20 vSetDate,
+Gui, 3:Add, Text, x12 y65 w110 h20 , Report Date
+Gui, 3:Show, w275 h100, Kolea HOA Access Control
 WinWaitClose, Kolea HOA Access Control
 return
 
 3GuiClose:
 ExitApp
-	
+
 ;=================================================================
 ;Prompt for input xls file, and convert it to CSV
 ;=================================================================
@@ -123,6 +127,11 @@ GetCSV()
 ;=================================================================
 GetInOutOcc()
 {
+	;FormatTime, DateToday,, M/d/yyyy
+	FormatTime, DateToday, %SetDate%, M/d/yyyy
+	
+	DateTodaytemp := convert(DateToday)
+
 	CSV_Load(inputcsv,1)
     FileLength := CSV_TotalRows(1)
 	Loop, %FileLength%
@@ -132,9 +141,6 @@ GetInOutOcc()
 			CheckinDay := CSV_ReadCell(1, A_Index, ColArrDate)
 			IsOwner := CSV_ReadCell(1, A_Index, ColOwnRes)
 			
-            FormatTime, DateToday,, M/d/yyyy
-			;DateToday = 5/27/2015 ; Un-comment this line to force a specific date for debugging and testing.
-			DateTodaytemp := convert(DateToday)
 			CheckinDaytemp :=convert(CheckinDay)
 			CheckoutDaytemp := convert(CheckoutDay)
             EnvSub, CheckoutDaytemp, DateTodaytemp, days
@@ -272,7 +278,7 @@ Pad(str1) {
 }
 
 ;=================================================================
-;Notify the user if no checkins or checkouts
+;Display checkin/checkout/occupied information
 ;=================================================================
 DisplayData() {
 	
@@ -284,7 +290,7 @@ DisplayData() {
 	Gui, 4:Add, Button, x100 y380 w110 h30 , &Checkins
 	Gui, 4:Add, Button, x250 y380 w110 h30 , &Shutoffs
 	Gui, 4:Add, Button, x400 y380 w110 h30 , &Occupied
-	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:show,w600 h415,%WindowTitle% - %DateToday%
 	Gui, 4:+LastFound
 	WinWaitClose
 	return
@@ -294,7 +300,7 @@ DisplayData() {
 	CurrentFile = Checkins
 	GuiControl,, TextWindow, %FileContents%
 	WindowTitle = Checkins
-	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:show,w600 h415,%WindowTitle% - %DateToday%
 	return
 	
 	4ButtonShutoffs:
@@ -302,7 +308,7 @@ DisplayData() {
 	CurrentFile = Checkouts
 	GuiControl,, TextWindow, %FileContents%
 	WindowTitle = Shutoffs
-	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:show,w600 h415,%WindowTitle% - %DateToday%
 	return
 	
 	4ButtonOccupied:
@@ -310,7 +316,7 @@ DisplayData() {
 	CurrentFile = Occupied Units
 	GuiControl,, TextWindow, %FileContents%
 	WindowTitle = Occupied Units
-	Gui, 4:show,w600 h415,%WindowTitle%
+	Gui, 4:show,w600 h415,%WindowTitle% - %DateToday%
 	return
 	
 	4GuiClose:
@@ -470,10 +476,10 @@ Notify()
 ;Attempt to program all cards/codes by directly manipulating
 ;the AlarmLock mbd database
 ;=================================================================
-ProgramCodes()
-{
+;ProgramCodes()
+;{
 	;Populate card/code starting array (Unit, Cards, Code)
 	;Shut off all cards/codes
 	;Turn on appropriate cards
 	;Turn on appropriate codes
-}
+;}
