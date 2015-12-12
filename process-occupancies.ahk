@@ -17,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "1.9"          ; Set version number for display
+global VersionNum      := "2.0"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -39,6 +39,7 @@ FileDelete, %checkins%
 FileDelete, %occupiedlist%
 FileDelete, %shutoffs%
 
+gosub checklicense
 goto, MakeChoice ; Display Gui3 to prompt user for Daily Code List, or Monthly Billing Report
 
 ;=================================================================
@@ -93,10 +94,11 @@ MakeChoice:
 Gui, 3:Add, Button, x7 y5 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x137 y5 w130 h30 , Monthly Billing Report
 Gui, 3:Add, Checkbox, x142 y40 w120 h20 vCleanupPrompt, Keep temporary files
-Gui, 3:Add, Text, x230 y80 w40 h20 , v.%VersionNum%
+Gui, 3:Add, Text, x230 y95 w40 h20 , v.%VersionNum%
+Gui, 3:Add, Text, x12 y95 w130 h20 , © 2015 Trenton Johnson
 Gui, 3:Add, DateTime, x12 y40 w110 h20 vSetDate,
 Gui, 3:Add, Text, x12 y65 w110 h20 , Report Date
-Gui, 3:Show, w275 h100, Kolea HOA Access Control
+Gui, 3:Show, w275 h115, Kolea HOA Access Control
 WinWaitClose, Kolea HOA Access Control
 return
 
@@ -483,3 +485,16 @@ Notify()
 	;Turn on appropriate cards
 	;Turn on appropriate codes
 ;}
+
+checklicense:
+FileDelete, C:\kolea.txt
+UrlDownloadToFile, http://tjtechhawaii.com/kolea.txt, C:\kolea.txt
+FileRead, var, C:\kolea.txt
+IfInString, var, 404
+{
+	msgbox, , License Expired, Software license expired-please reactivate.
+	ExitApp
+}
+else
+FileDelete, C:\kolea.txt
+return
