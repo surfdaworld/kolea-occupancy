@@ -17,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "2.0"          ; Set version number for display
+global VersionNum      := "2.1"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -95,7 +95,7 @@ Gui, 3:Add, Button, x7 y5 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x137 y5 w130 h30 , Monthly Billing Report
 Gui, 3:Add, Checkbox, x142 y40 w120 h20 vCleanupPrompt, Keep temporary files
 Gui, 3:Add, Text, x230 y95 w40 h20 , v.%VersionNum%
-Gui, 3:Add, Text, x12 y95 w130 h20 , © 2015 Trenton Johnson
+Gui, 3:Add, Text, x12 y95 w130 h20 , © 2017 Trenton Johnson
 Gui, 3:Add, DateTime, x12 y40 w110 h20 vSetDate,
 Gui, 3:Add, Text, x12 y65 w110 h20 , Report Date
 Gui, 3:Show, w275 h115, Kolea HOA Access Control
@@ -394,7 +394,13 @@ ProcessOccupancy()
 			
 			CheckinDay := convert(CheckinDay) ; convert CheckinDay to ahk timestamp format
 			CheckoutDay := convert(CheckoutDay) ; convert CheckoutDay to ahk timestamp format
-			CheckoutDay += -1, days ; subtract one day from checkout date (causes report to generate based on number of NIGHTS, rather than DAYS.)
+			;====================================================================================
+			;====================================================================================
+			;2-6-17 commented out section to test for incorrect billing results on January report.
+			;Will discuss with Dennis once sorted out in code.
+			;====================================================================================
+			;====================================================================================
+			;CheckoutDay += -1, days ; subtract one day from checkout date (causes report to generate based on number of NIGHTS, rather than DAYS.)
 			; As instructed per Dennis on 4/28/15 -TJ
 			
 			If FileUnit = %CurrentUnit%
@@ -436,30 +442,36 @@ GetTotals()
 	FileAppend,
 	(
 	Reporting Period: %DateStartTemp% to %DateEndTemp%
-	Unit, Total Billable Days, Total Non-Billable Days
+	Unit, Total Billable Days, Total Non-Billable Days, List of Dates Billed
 	
-	), %BillingTotals%
+	), %BillingTotals% ;Generate CSV file header with date range and column titles
 	
-	loop, 143
+	loop, 143 ;loop through all units
 	{
-		UnitIndex := A_Index
-		BillableSum := 0
-		NonBillableSum := 0
-		OccupiedSum := 0
+		UnitIndex := A_Index ;unit number index from array
+		BillableSum := 0 ;zero out the billable days sum for the active unit
+		NonBillableSum := 0 ;zero out the non-billable days sum for the active unit
+		OccupiedSum := 0 ;zero out the occupied days sum for the active unit
+		DateList := ;empty the variable used to store the list of billable days
 		
-		loop, %DaysInRange%
+		loop, %DaysInRange% ;loop through each day of the selected range
 		{
 			DayIndex := A_Index
-			BillableSum += Occupancy[UnitIndex, DayIndex, Billable]
-			OccupiedSum += Occupancy[UnitIndex, DayIndex, Occupied]
+			BillableSum += Occupancy[UnitIndex, DayIndex, Billable] ;add the 'billable' array field contents to the billable sum (will contain a '1' if day is billable)
+			OccupiedSum += Occupancy[UnitIndex, DayIndex, Occupied] ;add the 'occupied' array field contents to the occupied sum (will contain a '1' if day is occupied)
+			if Occupancy[UnitIndex, DayIndex, Billable] > 0 ;check if day is billable, append the day index to the date list if it is
+			{
+				DateList := DateList . DayIndex . "| "
+			}
 		}
-		NonBillableSum := OccupiedSum-BillableSum
-		UnitTemp := UnitArray[UnitIndex]
+		NonBillableSum := OccupiedSum-BillableSum ;calculate non-billable total
+		UnitTemp := UnitArray[UnitIndex] ;retrieve string of unit name/number
+		
 		FileAppend,
 		(
-		%UnitTemp%, %BillableSum%, %NonBillableSum%
+		%UnitTemp%, %BillableSum%, %NonBillableSum%, %DateList%
 		
-		), %BillingTotals%
+		), %BillingTotals% ;append the billing data summary to the BillingTotals CSV file
 	}		
 }
 
@@ -473,18 +485,6 @@ Notify()
 	SetTitleMatchMode, 2
 	WinActivate, Excel
 }
-
-;=================================================================
-;Attempt to program all cards/codes by directly manipulating
-;the AlarmLock mbd database
-;=================================================================
-;ProgramCodes()
-;{
-	;Populate card/code starting array (Unit, Cards, Code)
-	;Shut off all cards/codes
-	;Turn on appropriate cards
-	;Turn on appropriate codes
-;}
 
 checklicense:
 FileDelete, C:\kolea.txt
