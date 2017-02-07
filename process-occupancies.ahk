@@ -95,7 +95,7 @@ Gui, 3:Add, Button, x7 y5 w120 h30 , Generate Code List
 Gui, 3:Add, Button, x137 y5 w130 h30 , Monthly Billing Report
 Gui, 3:Add, Checkbox, x142 y40 w120 h20 vCleanupPrompt, Keep temporary files
 Gui, 3:Add, Text, x230 y95 w40 h20 , v.%VersionNum%
-Gui, 3:Add, Text, x12 y95 w130 h20 , Â© 2015 Trenton Johnson
+Gui, 3:Add, Text, x12 y95 w130 h20 , © 2017 Trenton Johnson
 Gui, 3:Add, DateTime, x12 y40 w110 h20 vSetDate,
 Gui, 3:Add, Text, x12 y65 w110 h20 , Report Date
 Gui, 3:Show, w275 h115, Kolea HOA Access Control
