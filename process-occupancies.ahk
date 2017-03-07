@@ -17,7 +17,7 @@ global Occupancy       := []             ; master occupancy array, UnitNumber:Da
 global Billable        := 1              ; store billable variable for use as Occupancy[] array dimension
 global Occupied        := 2              ; store occupied variable for use as Occupancy[] array dimension
 global CleanupPrompt   :=                ; decide whether to prompt user to save/delete temp files (used in Gui1 checkbox)
-global VersionNum      := "2.1"          ; Set version number for display
+global VersionNum      := "2.2"          ; Set version number for display
 global FileContents    :=                ; variable for displaying occupancy data in Gui4
 global TextWindow      :=                ; Gui4control variable for edit field to display file contents
 global WindowTitle     := Occupancy Data ; Variable to store window name for Gui4
@@ -398,9 +398,10 @@ ProcessOccupancy()
 			;====================================================================================
 			;2-6-17 commented out section to test for incorrect billing results on January report.
 			;Will discuss with Dennis once sorted out in code.
+			;3-1-17 re-enabled calculation by nights instead of by day, per board instruction.
 			;====================================================================================
 			;====================================================================================
-			;CheckoutDay += -1, days ; subtract one day from checkout date (causes report to generate based on number of NIGHTS, rather than DAYS.)
+			CheckoutDay += -1, days ; subtract one day from checkout date (causes report to generate based on number of NIGHTS, rather than DAYS.)
 			; As instructed per Dennis on 4/28/15 -TJ
 			
 			If FileUnit = %CurrentUnit%
